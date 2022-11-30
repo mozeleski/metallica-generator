@@ -3,6 +3,7 @@ import re
 import json
 import time
 import names
+import random
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -21,6 +22,25 @@ captcha_config = {
             'recaptchaTimeout':  600,
             'pollingInterval':   10,
         }
+
+def loadProxy():
+    with open('proxies.txt','r') as proxyIn:
+        proxyInput = proxyIn.read().splitlines()
+    
+    proxyList = [i for i in proxyInput]
+    p = random.choice(proxyList)
+    p = p.split(':')
+    try:
+        proxies = {
+            'http':f'http://{p[2]}:{p[3]}@{p[0]}:{p[1]}',
+            'https':f'https://{p[2]}:{p[3]}@{p[0]}:{p[1]}'
+        }
+    except:
+        proxies = {
+            'http':f'http://{p[0]}:{p[1]}',
+            'https':f'https://{p[0]}:{p[1]}'
+        }
+    return proxies
 
 class Generator:
     def __init__(self):
@@ -110,10 +130,12 @@ class Generator:
 
         return f"""__cq_dnt={__cq_dnt}; dw_dnt={dw_dnt}; _gcl_au={_gcl_au}; _fbp={_fbp}; _gid={_gid}; _tt_enable_cookie={_tt_enable_cookie}; _ttp={_ttp}; _li_dcdm_c={_li_dcdm_c}; _lc2_fpi={_lc2_fpi}; __cq_uuid={__cq_uuid}; __cq_seg={__cq_seg}; dw={dw}; dw_cookies_accepted={dw_cookies_accepted}; _sp_ses.12ed={_sp_ses}; cquid={cquid}; _gat_UA-11214620-1={_gat_UA}; sid={sid}; dwsid={dwsid}; dwanonymous_14a9e20de599203e490e731dc5bac197={dwanonymous_14a9e20de599203e490e731dc5bac197}; dwac_c26e5001b1c5ffde452d7bcd56={dwac_c26e5001b1c5ffde452d7bcd56}; cqcid={cqcid}; _dc_gtm_UA-11214620-1={_dc_gtm_UA}; _ga={_ga}; _sp_id.12ed={_sp_id}; _ga_8MT9WZCNB1={_ga_A}; _ga_QKEQR920KZ={_ga_B};"""
 
+    def inject_token(self):
+        return input('inject token -->  ')
 
     def get_page(self):
         self.s = requests.session()
-        page = self.s.get('https://metallica.com/register', headers={
+        page = self.s.get('https://metallica.com/register', proxies=loadProxy(), headers={
             'authority': 'metallica.com',
             'path': f'/register',
             'scheme': 'https',
@@ -162,7 +184,7 @@ class Generator:
             'csrf_token': self.registration_csrf
         }
         
-        createAcc = self.s.post(f'https://metallica.com/on/demandware.store/Sites-Metallica-Site/default/Account-RegistrationForm?&format=ajax',data=data,headers={
+        createAcc = self.s.post(f'https://metallica.com/on/demandware.store/Sites-Metallica-Site/default/Account-RegistrationForm?&format=ajax',data=data, proxies=loadProxy(), headers={
             'authority':'www.metallica.com',
             'path': '/on/demandware.store/Sites-Metallica-Site/Account-RegistrationForm',
             'scheme': 'https',
@@ -186,7 +208,7 @@ class Generator:
             'x-requested-with': 'XMLHttpRequest'
         })
     
-        print(f'create response... {createAcc.json()}')
+        print(f'create response... {createAcc.text}')
         self.email = f'{self.first}{self.last}123{script_config["catchall"]}:{script_config["password"]}'
         print(f'{self.first}{self.last}123{script_config["catchall"]}:{script_config["password"]}')
         with open('accounts.txt','a') as accountFile:
